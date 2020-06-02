@@ -59,8 +59,13 @@ func webhook(w http.ResponseWriter, req *http.Request) {
 	log.Printf("Generate responce signature: %s \n", signature)
 
 	// Send responce
+	type Signature struct {
+		Signature string `json:"signature"`
+	}
+	var s Signature
+	s.Signature = signature
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, "{\"signature\":\"%s\"}", signature)
+	json.NewEncoder(w).Encode(s)
 }
 
 func main() {
