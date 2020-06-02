@@ -51,7 +51,8 @@ func webhook(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Log token and uri
-	fullURI := "http://" + req.Host + req.URL.Path
+	//	fullURI := "http://" + req.Host + req.URL.Path
+	fullURI := "http://test.com"
 	log.Printf("Got token: %s for URI: %s\n", *subscr.Token, fullURI)
 
 	// Construct sinature responce
