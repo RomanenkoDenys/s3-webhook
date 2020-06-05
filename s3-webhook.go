@@ -7,13 +7,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
-	"strings"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
-
 
 // Generate hmac_sha256_hex
 func HmacSha256hex(message string, secret string) string {
@@ -30,7 +29,7 @@ func HmacSha256(message string, secret string) string {
 }
 
 // Send subscription confirmation
-func SubscriptionConfirmation(w http.ResponseWriter, req *http.Request , body string) {
+func SubscriptionConfirmation(w http.ResponseWriter, req *http.Request, body []byte) {
 	type S3Request struct {
 		Timestamp        string `json:"Timestamp"`
 		Type             string `json:"Type"`
@@ -41,12 +40,9 @@ func SubscriptionConfirmation(w http.ResponseWriter, req *http.Request , body st
 	}
 
 	var s3req S3Request
-	log.Printf("%s\n",string(body))
 
 	// Decode json fields
-	d := json.NewDecoder(req.Body)
-	//	d.DisallowUnknownFields() // catch unwanted fields
-	err := d.Decode(&s3req)
+	err := json.Unmarshal(body, &s3req)
 	if err != nil {
 		// bad JSON or unrecognized json field
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -93,12 +89,12 @@ func Webhook(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-    
+
 	// log request
 	log.Printf("[%s] incoming HTTP request from %s\n", req.Method, req.RemoteAddr)
 	// check if we got subscription confirmation request
-	if strings.Contains(string(body),"\"Type\":\"SubscriptionConfirmation\"") {
-		SubscriptionConfirmation(w,req,string(body))	
+	if strings.Contains(string(body), "\"Type\":\"SubscriptionConfirmation\"") {
+		SubscriptionConfirmation(w, req, body)
 	} else {
 		log.Printf("Unknown request\n")
 	}
