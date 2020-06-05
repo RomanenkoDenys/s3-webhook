@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"flag"
@@ -29,11 +28,11 @@ func HmacSha256hex(message string, secret string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-// Generate hmac_sha256_base64
+// Generate hmac_sha256
 func HmacSha256(message string, secret string) string {
 	h := hmac.New(sha256.New, []byte(secret))
 	h.Write([]byte(message))
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+	return string(h.Sum(nil))
 }
 
 func ping(w http.ResponseWriter, req *http.Request) {
