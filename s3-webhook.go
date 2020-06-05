@@ -8,18 +8,12 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strings"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 )
 
-type subscriptionrequest struct {
-	Timestamp        string `json:"Timestamp"`
-	Type             string `json:"Type"`
-	Message          string `json:"Message"`
-	TopicArn         string `json:"TopicArn"`
-	SignatureVersion int    `json:"SignatureVersion"`
-	Token            string `json:"Token"`
-}
 
 // Generate hmac_sha256_hex
 func HmacSha256hex(message string, secret string) string {
@@ -35,21 +29,23 @@ func HmacSha256(message string, secret string) string {
 	return string(h.Sum(nil))
 }
 
-func ping(w http.ResponseWriter, req *http.Request) {
-	// log request
-	log.Printf("[%s] incoming HTTP Ping request from %s\n", req.Method, req.RemoteAddr)
-	fmt.Fprintf(w, "Pong\n")
-}
+// Send subscription confirmation
+func SubscriptionConfirmation(w http.ResponseWriter, req *http.Request , body string) {
+	type S3Request struct {
+		Timestamp        string `json:"Timestamp"`
+		Type             string `json:"Type"`
+		Message          string `json:"Message"`
+		TopicArn         string `json:"TopicArn"`
+		SignatureVersion int    `json:"SignatureVersion"`
+		Token            string `json:"Token"`
+	}
 
-func webhook(w http.ResponseWriter, req *http.Request) {
-	var subscr subscriptionrequest
+	var s3req S3Request
 
-	// log request
-	log.Printf("[%s] incoming HTTP request from %s\n", req.Method, req.RemoteAddr)
 	// Decode json fields
 	d := json.NewDecoder(req.Body)
 	//	d.DisallowUnknownFields() // catch unwanted fields
-	err := d.Decode(&subscr)
+	err := d.Decode(&s3req)
 	if err != nil {
 		// bad JSON or unrecognized json field
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -58,10 +54,10 @@ func webhook(w http.ResponseWriter, req *http.Request) {
 
 	// Log token and uri
 	fullURI := "http://" + req.Host + req.URL.Path
-	log.Printf("Got timestamp: %s TopicArn: %s Token: %s URL: %s\n", subscr.Timestamp, subscr.TopicArn, subscr.Token, fullURI)
+	log.Printf("Got timestamp: %s TopicArn: %s Token: %s URL: %s\n", s3req.Timestamp, s3req.TopicArn, s3req.Token, fullURI)
 
 	// Construct sinature responce
-	signature := HmacSha256hex(fullURI, HmacSha256(subscr.TopicArn, HmacSha256(subscr.Timestamp, subscr.Token)))
+	signature := HmacSha256hex(fullURI, HmacSha256(s3req.TopicArn, HmacSha256(s3req.Timestamp, s3req.Token)))
 	log.Printf("Generate responce signature: %s \n", signature)
 
 	// Send responce
@@ -74,6 +70,41 @@ func webhook(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(s)
 }
 
+// Send subscription confirmation
+//func GotRecords(w http.ResponseWriter, req *http.Request , body string) {
+
+//}
+
+// Liveness probe
+func Ping(w http.ResponseWriter, req *http.Request) {
+	// log request
+	log.Printf("[%s] incoming HTTP Ping request from %s\n", req.Method, req.RemoteAddr)
+	fmt.Fprintf(w, "Pong\n")
+}
+
+//Webhook
+func Webhook(w http.ResponseWriter, req *http.Request) {
+
+	// Read body
+	body, err := ioutil.ReadAll(req.Body)
+	defer req.Body.Close()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+    
+	// log request
+	log.Printf("[%s] incoming HTTP request from %s\n", req.Method, req.RemoteAddr)
+
+	// check if we got subscription confirmation request
+	if strings.Contains(string(body),"\"Type\":\"SubscriptionConfirmation\"") {
+		SubscriptionConfirmation(w,req,string(body))	
+	} else {
+		log.Printf("Unknown request\n")
+	}
+
+}
+
 func main() {
 
 	// get command line args
@@ -81,8 +112,8 @@ func main() {
 	bindAddr := flag.String("address", "", "ip address in dot format")
 	flag.Parse()
 
-	http.HandleFunc("/ping", ping)
-	http.HandleFunc("/webhook", webhook)
+	http.HandleFunc("/ping", Ping)
+	http.HandleFunc("/webhook", Webhook)
 
 	log.Fatal(http.ListenAndServe(*bindAddr+":"+strconv.Itoa(*bindPort), nil))
 }
