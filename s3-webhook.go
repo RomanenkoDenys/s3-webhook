@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"flag"
@@ -21,11 +22,18 @@ type subscriptionrequest struct {
 	Token            string `json:"Token"`
 }
 
-// Generate hmac_sha256
-func HmacSha256(message string, secret string) string {
+// Generate hmac_sha256_hex
+func HmacSha256hex(message string, secret string) string {
 	h := hmac.New(sha256.New, []byte(secret))
 	h.Write([]byte(message))
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+// Generate hmac_sha256_base64
+func HmacSha256(message string, secret string) string {
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(message))
+	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
 func ping(w http.ResponseWriter, req *http.Request) {
@@ -51,11 +59,10 @@ func webhook(w http.ResponseWriter, req *http.Request) {
 
 	// Log token and uri
 	fullURI := "http://" + req.Host + req.URL.Path
-	log.Printf("Got token: %s for URI: %s\n", subscr.Token, fullURI)
+	log.Printf("Timestamp: %s\nTopicArn: %s\nToken: %s\n URL: %s\n", subscr.Timestamp, subscr.TopicArn, subscr.Token, fullURI)
 
 	// Construct sinature responce
-//	signature := HmacSha256("http://test.com", HmacSha256("mcs2883541269|bucketA|s3:ObjectCreated:Put", HmacSha256("2019-12-26T19:29:12+03:00", "RPE5UuG94rGgBH6kHXN9FUPugFxj1hs2aUQc99btJp3E49tA")))
-	signature := HmacSha256(fullURI, HmacSha256(subscr.TopicArn, HmacSha256(subscr.Timestamp, subscr.Token)))
+	signature := HmacSha256hex(fullURI, HmacSha256(subscr.TopicArn, HmacSha256(subscr.Timestamp, subscr.Token)))
 	log.Printf("Generate responce signature: %s \n", signature)
 
 	// Send responce
