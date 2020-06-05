@@ -68,9 +68,9 @@ func SubscriptionConfirmation(w http.ResponseWriter, req *http.Request, body []b
 }
 
 // Send subscription confirmation
-//func GotRecords(w http.ResponseWriter, req *http.Request , body string) {
-
-//}
+func GotRecords(w http.ResponseWriter, req *http.Request , body []byte) {
+	log.Println(body)
+}
 
 // Liveness probe
 func Ping(w http.ResponseWriter, req *http.Request) {
@@ -96,7 +96,7 @@ func Webhook(w http.ResponseWriter, req *http.Request) {
 	if strings.Contains(string(body), "\"Type\":\"SubscriptionConfirmation\"") {
 		SubscriptionConfirmation(w, req, body)
 	} else {
-		log.Printf("Unknown request\n")
+		GotRecords(w, req, body)
 	}
 
 }
