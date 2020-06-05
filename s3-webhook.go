@@ -58,7 +58,7 @@ func webhook(w http.ResponseWriter, req *http.Request) {
 
 	// Log token and uri
 	fullURI := "http://" + req.Host + req.URL.Path
-	log.Printf("Timestamp: %s\nTopicArn: %s\nToken: %s\n URL: %s\n", subscr.Timestamp, subscr.TopicArn, subscr.Token, fullURI)
+	log.Printf("Got timestamp: %s TopicArn: %s Token: %s URL: %s\n", subscr.Timestamp, subscr.TopicArn, subscr.Token, fullURI)
 
 	// Construct sinature responce
 	signature := HmacSha256hex(fullURI, HmacSha256(subscr.TopicArn, HmacSha256(subscr.Timestamp, subscr.Token)))
