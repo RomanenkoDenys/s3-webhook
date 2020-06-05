@@ -95,7 +95,7 @@ func Webhook(w http.ResponseWriter, req *http.Request) {
     
 	// log request
 	log.Printf("[%s] incoming HTTP request from %s\n", req.Method, req.RemoteAddr)
-
+	log.Printf("%s\n",string(body))
 	// check if we got subscription confirmation request
 	if strings.Contains(string(body),"\"Type\":\"SubscriptionConfirmation\"") {
 		SubscriptionConfirmation(w,req,string(body))	
