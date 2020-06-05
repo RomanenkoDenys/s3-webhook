@@ -69,7 +69,7 @@ func SubscriptionConfirmation(w http.ResponseWriter, req *http.Request, body []b
 
 // Send subscription confirmation
 func GotRecords(w http.ResponseWriter, req *http.Request , body []byte) {
-	log.Println(body)
+	log.Println(string(body))
 }
 
 // Liveness probe
