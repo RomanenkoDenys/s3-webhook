@@ -68,8 +68,53 @@ func SubscriptionConfirmation(w http.ResponseWriter, req *http.Request, body []b
 }
 
 // Send subscription confirmation
-func GotRecords(w http.ResponseWriter, req *http.Request , body []byte) {
-	log.Println(string(body))
+func GotRecords(w http.ResponseWriter, req *http.Request, body []byte) {
+	// struct for call from s3
+	type S3Request struct {
+		Records []struct {
+			S3 struct {
+				Object struct {
+					ETag      string `json:"eTag"`
+					Sequencer int    `json:"sequencer"`
+					Key       string `json:"key"`
+					Size      int    `json:"size"`
+				} `json:"object"`
+				ConfigurationID string `json:"configurationId"`
+				Bucket          struct {
+					Name          string `json:"name"`
+					OwnerIdentity struct {
+						PrincipalID string `json:"principalId"`
+					} `json:"ownerIdentity"`
+				} `json:"bucket"`
+				S3SchemaVersion string `json:"s3SchemaVersion"`
+			} `json:"s3"`
+			EventVersion      string `json:"eventVersion"`
+			RequestParameters struct {
+				SourceIPAddress string `json:"sourceIPAddress"`
+			} `json:"requestParameters"`
+			UserIdentity struct {
+				PrincipalID string `json:"principalId"`
+			} `json:"userIdentity"`
+			EventName        string `json:"eventName"`
+			AwsRegion        string `json:"awsRegion"`
+			EventSource      string `json:"eventSource"`
+			ResponseElements struct {
+				XAmzRequestID string `json:"x-amz-request-id"`
+			} `json:"responseElements"`
+		} `json:"Records"`
+	}
+
+	var s3req S3Request
+
+	// Decode json fields
+	err := json.Unmarshal(body, &s3req)
+	if err != nil {
+		// bad JSON or unrecognized json field
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	log.Println(s3req)
 }
 
 // Liveness probe
