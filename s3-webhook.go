@@ -14,6 +14,8 @@ import (
 	"strings"
 )
 
+var actionScript string
+
 // Generate hmac_sha256_hex
 func HmacSha256hex(message string, secret string) string {
 	h := hmac.New(sha256.New, []byte(secret))
@@ -114,8 +116,22 @@ func GotRecords(w http.ResponseWriter, req *http.Request, body []byte) {
 		return
 	}
 
+	var action string
+
+	// Get all records
 	for _, record := range s3req.Records {
-    	    log.Println(record.S3.Bucket.Name+"/"+record.S3.Object.Key+" "+record.EventName)
+		// Check add action
+		if strings.Contains(record.S3.Object.Key, "ObjectCreated") || strings.Contains(record.S3.Object.Key, "PutObject") || strings.Contains(record.S3.Object.Key, "PutObjectCopy") {
+			action = "copy"
+		} else
+		// check remove action
+		if strings.Contains(record.S3.Object.Key, "ObjectRemoved") || strings.Contains(record.S3.Object.Key, "DeleteObject") {
+			action = "delete"
+		}
+
+		if action == "copy" || action == "delete" {
+			log.Println(actionScript + " " + record.S3.Bucket.Name + "/" + record.S3.Object.Key + " " + action)
+		}
 	}
 
 }
@@ -154,6 +170,7 @@ func main() {
 	// get command line args
 	bindPort := flag.Int("port", 80, "number between 1-65535")
 	bindAddr := flag.String("address", "", "ip address in dot format")
+	flag.StringVar(&actionScript, "script", "", "external script to execute")
 	flag.Parse()
 
 	http.HandleFunc("/ping", Ping)
