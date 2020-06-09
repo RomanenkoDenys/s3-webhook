@@ -114,7 +114,9 @@ func GotRecords(w http.ResponseWriter, req *http.Request, body []byte) {
 		return
 	}
 
-	log.Println(s3req)
+	for _, record := range s3req.Records {
+    	    log.Println(record.S3.Object.ETag)
+	}
 }
 
 // Liveness probe
