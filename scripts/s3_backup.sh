@@ -12,3 +12,6 @@ if [ -z ${SOURCEFILE} ]; then
     echo "Usage: ${0} action sourcefile"
     exit 1
 fi
+
+
+echo "Success"
