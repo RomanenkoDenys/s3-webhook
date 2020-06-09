@@ -115,9 +115,8 @@ func GotRecords(w http.ResponseWriter, req *http.Request, body []byte) {
 	}
 
 	for _, record := range s3req.Records {
-    	    log.Println(record.S3.Object.ETag)
+    	    log.Println(record.S3.Bucket.Name+"/"+record.S3.Object.Key+" "+record.EventName)
 	}
-	    log.Println(s3req)
 
 }
 
