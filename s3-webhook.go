@@ -121,11 +121,11 @@ func GotRecords(w http.ResponseWriter, req *http.Request, body []byte) {
 	// Get all records
 	for _, record := range s3req.Records {
 		// Check add action
-		if strings.Contains(record.S3.Object.Key, "ObjectCreated") || strings.Contains(record.S3.Object.Key, "PutObject") || strings.Contains(record.S3.Object.Key, "PutObjectCopy") {
+		if strings.Contains(record.EventName, "ObjectCreated") || strings.Contains(record.EventName, "PutObject") || strings.Contains(record.EventName, "PutObjectCopy") {
 			action = "copy"
 		} else
 		// check remove action
-		if strings.Contains(record.S3.Object.Key, "ObjectRemoved") || strings.Contains(record.S3.Object.Key, "DeleteObject") {
+		if strings.Contains(record.EventName, "ObjectRemoved") || strings.Contains(record.EventName, "DeleteObject") {
 			action = "delete"
 		}
 
