@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -130,6 +132,29 @@ func GotRecords(w http.ResponseWriter, req *http.Request, body []byte) {
 		}
 
 		if action == "copy" || action == "delete" {
+			scriptPath, err := exec.LookPath(actionScript)
+			if err != nil {
+				// Path not found
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				log.Println(err.Error())
+				return
+			}
+			// Exec struct
+			cmdScript := &exec.Cmd{
+				Path:   scriptPath,
+				Args:   []string{scriptPath, record.S3.Bucket.Name + "/" + record.S3.Object.Key, action},
+				Stdout: os.Stdout,
+				Stderr: os.Stdout,
+			}
+			// Run script
+			err = cmdScript.Run()
+			if err != nil {
+				// Script error
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				log.Println(err.Error())
+				return
+			}
+
 			log.Println(actionScript + " " + record.S3.Bucket.Name + "/" + record.S3.Object.Key + " " + action)
 		}
 	}
