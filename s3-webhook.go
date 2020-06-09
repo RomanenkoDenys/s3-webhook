@@ -142,7 +142,7 @@ func GotRecords(w http.ResponseWriter, req *http.Request, body []byte) {
 			// Exec struct
 			cmdScript := &exec.Cmd{
 				Path:   scriptPath,
-				Args:   []string{scriptPath, record.S3.Bucket.Name + "/" + record.S3.Object.Key, action},
+				Args:   []string{scriptPath, record.S3.Bucket.Name, record.S3.Object.Key, action},
 				Stdout: os.Stdout,
 				Stderr: os.Stdout,
 			}
@@ -155,7 +155,6 @@ func GotRecords(w http.ResponseWriter, req *http.Request, body []byte) {
 				return
 			}
 
-			log.Println(actionScript + " " + record.S3.Bucket.Name + "/" + record.S3.Object.Key + " " + action)
 		}
 	}
 
